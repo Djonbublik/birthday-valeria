@@ -1,12 +1,18 @@
 import { useRef, useState, useEffect } from "react";
 import "./App.css";
 import { db } from "./firebase";
-import { ref, push, query, orderByChild, limitToLast, onValue } from "firebase/database";
+import {
+  ref,
+  push,
+  query,
+  orderByChild,
+  limitToLast,
+  onValue,
+} from "firebase/database";
 
 const BASE = import.meta.env.BASE_URL;
 
 const GALLERY_PHOTO_NAMES = [
-  "photo_5426876330701165030_x.jpg",
   "photo_5426876330701165032_y.jpg",
   "photo_5426876330701165033_y.jpg",
   "photo_5426876330701165034_y.jpg",
@@ -99,6 +105,11 @@ const WISHES = [
 Да прибудут рядом с тобой в этом году только верные, надежные, ответственные люди! ❤️`,
     "12.jpg",
   ),
+  w(
+    "От Бориса и Алёнки",
+    `ЗДОРОВЬЯ в личной жизни потом пожелать чтобы ХУЙ стоял и деньги были! Чтобы Vista доехала до 2226 года! Чтобы не ЗАЁБЫВАЛИ с не отложенными платежами! Чтобы АВАКАДО рос большим и здоровым ! Чтобы бананы начали рости в России! Чтобы за окном происходило больше всякой ДИЧИ, чтобы ты могла посмотреть и не скучать!`,
+    "13.jpg",
+  ),
 ];
 
 // ─── Particles ────────────────────────────────
@@ -132,7 +143,7 @@ function Particles() {
 
 // ─── Photo collage finale ─────────────────────
 const FINALE_PHOTOS = [
-  { file: "photo_5427197748873729679_x.jpg", cls: "fp-left" },
+  { file: "photo_5426876330701165030_x.jpg", cls: "fp-left" },
   { file: "main.jpg", cls: "fp-center" },
   { file: "photo_5427197748873729680_x.jpg", cls: "fp-right" },
 ];
@@ -309,11 +320,11 @@ function MiniGame() {
   // Load leaderboard in real-time
   useEffect(() => {
     const q = query(ref(db, "scores"), orderByChild("score"), limitToLast(10));
-    return onValue(q, snap => {
-      const entries = []
-      snap.forEach(child => entries.push({ id: child.key, ...child.val() }))
-      setLeaderboard(entries.reverse())
-    })
+    return onValue(q, (snap) => {
+      const entries = [];
+      snap.forEach((child) => entries.push({ id: child.key, ...child.val() }));
+      setLeaderboard(entries.reverse());
+    });
   }, []);
 
   const submitScore = async () => {
@@ -415,7 +426,10 @@ function MiniGame() {
       {!revealed && (
         <div className="game-reveal-wrap">
           <div className="game-reveal-radar">
-            <button className="game-reveal-btn" onClick={() => setRevealed(true)}>
+            <button
+              className="game-reveal-btn"
+              onClick={() => setRevealed(true)}
+            >
               Нажми меня!
             </button>
           </div>
@@ -425,30 +439,45 @@ function MiniGame() {
 
       {revealed && phase === "idle" && (
         <div className="game-card">
-          <button className="game-card-close" onClick={() => setRevealed(false)}>✕</button>
+          <button
+            className="game-card-close"
+            onClick={() => setRevealed(false)}
+          >
+            ✕
+          </button>
           <div className="game-card-icon">🧾</div>
           <div className="game-card-title">Поймай неопознанный платёж!</div>
           <div className="game-card-sub">Кликай по чекам · 60 секунд</div>
           <div className="game-leaderboard">
             <div className="lb-header">Топ игроков</div>
-            {leaderboard.length === 0
-              ? <div className="lb-empty">Пока никто не играл — будь первым!</div>
-              : leaderboard.slice(0, 3).map((e, i) => (
+            {leaderboard.length === 0 ? (
+              <div className="lb-empty">Пока никто не играл — будь первым!</div>
+            ) : (
+              leaderboard.slice(0, 3).map((e, i) => (
                 <div key={e.id} className="lb-row">
-                  <span className="lb-rank">{i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</span>
+                  <span className="lb-rank">
+                    {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
+                  </span>
                   <span className="lb-name">{e.name}</span>
                   <span className="lb-score">{e.score}</span>
                 </div>
               ))
-            }
+            )}
           </div>
-          <button className="game-start-btn" onClick={startGame}>Старт</button>
+          <button className="game-start-btn" onClick={startGame}>
+            Старт
+          </button>
         </div>
       )}
 
       {revealed && phase === "done" && (
         <div className="game-card">
-          <button className="game-card-close" onClick={() => setRevealed(false)}>✕</button>
+          <button
+            className="game-card-close"
+            onClick={() => setRevealed(false)}
+          >
+            ✕
+          </button>
           <div className="game-card-icon">{medal}</div>
           <div className="game-card-title">{score} поймано!</div>
           <div className="game-card-sub">{gameResultText(score)}</div>
@@ -458,27 +487,52 @@ function MiniGame() {
                 className="game-name-input"
                 placeholder="Твоё имя"
                 value={playerName}
-                onChange={e => setPlayerName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && submitScore()}
+                onChange={(e) => setPlayerName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitScore()}
                 maxLength={20}
               />
-              <button className="game-start-btn" onClick={submitScore}>Сохранить</button>
+              <button className="game-start-btn" onClick={submitScore}>
+                Сохранить
+              </button>
             </div>
           ) : (
-            <div className="game-card-sub" style={{ color: '#16a34a' }}>✓ Результат сохранён!</div>
+            <div className="game-card-sub" style={{ color: "#16a34a" }}>
+              ✓ Результат сохранён!
+            </div>
           )}
           {leaderboard.length > 0 && (
             <div className="game-leaderboard">
               {leaderboard.map((e, i) => (
-                <div key={e.id} className={`lb-row ${submitted && e.name === playerName.trim() && e.score === score ? 'lb-mine' : ''}`}>
-                  <span className="lb-rank">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`}</span>
+                <div
+                  key={e.id}
+                  className={`lb-row ${submitted && e.name === playerName.trim() && e.score === score ? "lb-mine" : ""}`}
+                >
+                  <span className="lb-rank">
+                    {i === 0
+                      ? "🥇"
+                      : i === 1
+                        ? "🥈"
+                        : i === 2
+                          ? "🥉"
+                          : `${i + 1}.`}
+                  </span>
                   <span className="lb-name">{e.name}</span>
                   <span className="lb-score">{e.score}</span>
                 </div>
               ))}
             </div>
           )}
-          <button className="game-start-btn" style={{ marginTop: '8px' }} onClick={() => { setSubmitted(false); setPlayerName(''); startGame(); }}>Ещё раз</button>
+          <button
+            className="game-start-btn"
+            style={{ marginTop: "8px" }}
+            onClick={() => {
+              setSubmitted(false);
+              setPlayerName("");
+              startGame();
+            }}
+          >
+            Ещё раз
+          </button>
         </div>
       )}
 
