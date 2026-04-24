@@ -314,8 +314,15 @@ function MiniGame() {
   // Load leaderboard in real-time
   useEffect(() => {
     return onValue(ref(db, "scores"), (snap) => {
-      const entries = [];
-      snap.forEach((child) => { entries.push({ id: child.key, ...child.val() }); });
+      const byName = new Map();
+      snap.forEach((child) => {
+        const val = child.val();
+        const prev = byName.get(val.name);
+        if (!prev || (val.score || 0) > (prev.score || 0)) {
+          byName.set(val.name, { id: child.key, ...val });
+        }
+      });
+      const entries = Array.from(byName.values());
       entries.sort((a, b) => (b.score || 0) - (a.score || 0));
       setLeaderboard(entries.slice(0, 10));
     });
