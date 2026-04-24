@@ -50,7 +50,13 @@ const WISHES = [
   ),
   w(
     "Белка",
-    `Лерка, с днем рождения!\n\nПомню с тобой весёлый момент, когда напились в Красилово — и как пробило колесо по дороге туда!\n\nЗнай, ты ахуенная! Хочется чтобы было больше совместных весёлых моментов!\n\nИ никогда ничего не утаивааааааай!!!!!!`,
+    `Лерка, с днем рождения! 
+
+помню с тобой веселый момент, когда напились в красилово и ссали возле бани, или только я... но это не важно.... и как пробило колесо по дороге в красилово !)))
+
+Знай, ты ахуенная! Хочется чтобы было больше совместных веселых моментов!
+
+И никогда ничего не утаивааааааай!!!!!!`,
     "5.jpg",
   ),
   w(
@@ -342,7 +348,7 @@ function MiniGame() {
     } catch (e) {
       setSubmitted(false);
       setMyKey(null);
-      alert('Не удалось сохранить 😔 Попробуй ещё раз');
+      alert("Не удалось сохранить 😔 Попробуй ещё раз");
     }
   };
 
@@ -507,20 +513,31 @@ function MiniGame() {
                 Сохранить
               </button>
             </div>
-          ) : (() => {
-            const myRank = myKey ? leaderboard.findIndex(e => e.id === myKey) + 1 : 0;
-            const rankMedal = myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : myRank === 3 ? "🥉" : "🎯";
-            return (
-              <div className="game-rank-result">
-                <div className="game-rank-saved">✓ Результат сохранён!</div>
-                {myRank > 0 && (
-                  <div className="game-rank-badge">
-                    {rankMedal} Ты на {myRank}-м месте
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+          ) : (
+            (() => {
+              const myRank = myKey
+                ? leaderboard.findIndex((e) => e.id === myKey) + 1
+                : 0;
+              const rankMedal =
+                myRank === 1
+                  ? "🥇"
+                  : myRank === 2
+                    ? "🥈"
+                    : myRank === 3
+                      ? "🥉"
+                      : "🎯";
+              return (
+                <div className="game-rank-result">
+                  <div className="game-rank-saved">✓ Результат сохранён!</div>
+                  {myRank > 0 && (
+                    <div className="game-rank-badge">
+                      {rankMedal} Ты на {myRank}-м месте
+                    </div>
+                  )}
+                </div>
+              );
+            })()
+          )}
           {leaderboard.length > 0 && (
             <div className="game-leaderboard">
               {leaderboard.map((e, i) => (
@@ -562,12 +579,14 @@ function MiniGame() {
             <span className="game-counter-label">поймано</span>
           </div>
           {leaderboard.length > 0 && (
-            <div className={`game-target ${score > leaderboard[0].score ? 'beating' : ''}`}>
+            <div
+              className={`game-target ${score > leaderboard[0].score ? "beating" : ""}`}
+            >
               <span className="game-target-num">
-                {score > leaderboard[0].score ? '🏆' : leaderboard[0].score + 1}
+                {score > leaderboard[0].score ? "🏆" : leaderboard[0].score + 1}
               </span>
               <span className="game-counter-label">
-                {score > leaderboard[0].score ? 'рекорд!' : 'до №1'}
+                {score > leaderboard[0].score ? "рекорд!" : "до №1"}
               </span>
             </div>
           )}
