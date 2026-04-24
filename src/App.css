@@ -556,6 +556,7 @@
   border-radius: 100px;
   border: 2px solid rgba(124, 58, 237, 0.5);
   animation: radar-ring 2s ease-out infinite;
+  pointer-events: none;
 }
 
 .game-reveal-radar::after {
