@@ -198,22 +198,19 @@
   .hero {
     flex-direction: column;
     align-items: flex-start;
-    padding: 80px 24px 40px;
+    padding: 80px 24px 0;
+    padding-bottom: 52vw;
     justify-content: flex-start;
     min-height: 0;
+    overflow: hidden;
   }
   .hero-cutout {
-    position: relative;
-    right: auto;
-    bottom: auto;
-    width: 72vw;
-    max-width: 300px;
-    margin: 24px auto 0;
-    transform: none !important;
-  }
-  .hero-cutout.in {
-    opacity: 1;
-    transform: none !important;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 68vw;
+    max-width: 320px;
+    margin: 0;
   }
   .hero-message {
     font-size: 15px;
