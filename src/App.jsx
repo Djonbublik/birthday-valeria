@@ -330,11 +330,16 @@ function MiniGame() {
   const submitScore = async () => {
     if (!playerName.trim() || submitted) return;
     setSubmitted(true);
-    await push(ref(db, "scores"), {
-      name: playerName.trim(),
-      score,
-      timestamp: Date.now(),
-    });
+    try {
+      await push(ref(db, "scores"), {
+        name: playerName.trim(),
+        score,
+        timestamp: Date.now(),
+      });
+    } catch (e) {
+      setSubmitted(false);
+      alert('Не удалось сохранить 😔 Попробуй ещё раз');
+    }
   };
 
   const stopAll = () => {
