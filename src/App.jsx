@@ -1,14 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import "./App.css";
 import { db } from "./firebase";
-import {
-  ref,
-  push,
-  query,
-  orderByChild,
-  limitToLast,
-  onValue,
-} from "firebase/database";
+import { ref, push, onValue } from "firebase/database";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -310,6 +303,7 @@ function MiniGame() {
   const [receipts, setReceipts] = useState([]);
   const [playerName, setPlayerName] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [myKey, setMyKey] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const nextId = useRef(0);
   const spawnTimer = useRef(null);
@@ -319,11 +313,11 @@ function MiniGame() {
 
   // Load leaderboard in real-time
   useEffect(() => {
-    const q = query(ref(db, "scores"), orderByChild("score"), limitToLast(10));
-    return onValue(q, (snap) => {
+    return onValue(ref(db, "scores"), (snap) => {
       const entries = [];
-      snap.forEach((child) => entries.push({ id: child.key, ...child.val() }));
-      setLeaderboard(entries.reverse());
+      snap.forEach((child) => { entries.push({ id: child.key, ...child.val() }); });
+      entries.sort((a, b) => (b.score || 0) - (a.score || 0));
+      setLeaderboard(entries.slice(0, 10));
     });
   }, []);
 
@@ -331,13 +325,16 @@ function MiniGame() {
     if (!playerName.trim() || submitted) return;
     setSubmitted(true);
     try {
-      await push(ref(db, "scores"), {
+      const newRef = push(ref(db, "scores"), {
         name: playerName.trim(),
         score,
         timestamp: Date.now(),
       });
+      setMyKey(newRef.key);
+      await newRef;
     } catch (e) {
       setSubmitted(false);
+      setMyKey(null);
       alert('Не удалось сохранить 😔 Попробуй ещё раз');
     }
   };
@@ -386,6 +383,9 @@ function MiniGame() {
     setScore(0);
     setReceipts([]);
     setTimeLeft(GAME_DURATION);
+    setSubmitted(false);
+    setPlayerName("");
+    setMyKey(null);
     phaseRef.current = "playing";
     setPhase("playing");
 
@@ -500,17 +500,26 @@ function MiniGame() {
                 Сохранить
               </button>
             </div>
-          ) : (
-            <div className="game-card-sub" style={{ color: "#16a34a" }}>
-              ✓ Результат сохранён!
-            </div>
-          )}
+          ) : (() => {
+            const myRank = myKey ? leaderboard.findIndex(e => e.id === myKey) + 1 : 0;
+            const rankMedal = myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : myRank === 3 ? "🥉" : "🎯";
+            return (
+              <div className="game-rank-result">
+                <div className="game-rank-saved">✓ Результат сохранён!</div>
+                {myRank > 0 && (
+                  <div className="game-rank-badge">
+                    {rankMedal} Ты на {myRank}-м месте
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           {leaderboard.length > 0 && (
             <div className="game-leaderboard">
               {leaderboard.map((e, i) => (
                 <div
                   key={e.id}
-                  className={`lb-row ${submitted && e.name === playerName.trim() && e.score === score ? "lb-mine" : ""}`}
+                  className={`lb-row ${e.id === myKey ? "lb-mine" : ""}`}
                 >
                   <span className="lb-rank">
                     {i === 0
@@ -530,11 +539,7 @@ function MiniGame() {
           <button
             className="game-start-btn"
             style={{ marginTop: "8px" }}
-            onClick={() => {
-              setSubmitted(false);
-              setPlayerName("");
-              startGame();
-            }}
+            onClick={startGame}
           >
             Ещё раз
           </button>
@@ -549,6 +554,16 @@ function MiniGame() {
             <span className="game-counter-score">{score}</span>
             <span className="game-counter-label">поймано</span>
           </div>
+          {leaderboard.length > 0 && (
+            <div className={`game-target ${score > leaderboard[0].score ? 'beating' : ''}`}>
+              <span className="game-target-num">
+                {score > leaderboard[0].score ? '🏆' : leaderboard[0].score + 1}
+              </span>
+              <span className="game-counter-label">
+                {score > leaderboard[0].score ? 'рекорд!' : 'до №1'}
+              </span>
+            </div>
+          )}
           <div className={`game-timer ${timerUrgent ? "urgent" : ""}`}>
             <span className="game-timer-num">{timeLeft}</span>
             <span className="game-counter-label">сек</span>
