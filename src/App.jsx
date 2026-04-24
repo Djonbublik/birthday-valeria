@@ -317,13 +317,13 @@ function MiniGame() {
   }, []);
 
   const submitScore = async () => {
-    if (!playerName.trim()) return;
+    if (!playerName.trim() || submitted) return;
+    setSubmitted(true);
     await push(ref(db, "scores"), {
       name: playerName.trim(),
       score,
       timestamp: Date.now(),
     });
-    setSubmitted(true);
   };
 
   const stopAll = () => {
@@ -413,33 +413,42 @@ function MiniGame() {
     <>
       {/* Idle / Done card */}
       {!revealed && (
-        <button className="game-reveal-btn" onClick={() => setRevealed(true)}>
-          Нажми меня!
-        </button>
+        <div className="game-reveal-wrap">
+          <div className="game-reveal-radar">
+            <button className="game-reveal-btn" onClick={() => setRevealed(true)}>
+              Нажми меня!
+            </button>
+          </div>
+          <p className="game-reveal-hint">👆 это для всех!</p>
+        </div>
       )}
 
       {revealed && phase === "idle" && (
         <div className="game-card">
+          <button className="game-card-close" onClick={() => setRevealed(false)}>✕</button>
           <div className="game-card-icon">🧾</div>
           <div className="game-card-title">Поймай неопознанный платёж!</div>
           <div className="game-card-sub">Кликай по чекам · 60 секунд</div>
-          {leaderboard.length > 0 && (
-            <div className="game-leaderboard">
-              {leaderboard.map((e, i) => (
+          <div className="game-leaderboard">
+            <div className="lb-header">Топ игроков</div>
+            {leaderboard.length === 0
+              ? <div className="lb-empty">Пока никто не играл — будь первым!</div>
+              : leaderboard.slice(0, 3).map((e, i) => (
                 <div key={e.id} className="lb-row">
-                  <span className="lb-rank">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`}</span>
+                  <span className="lb-rank">{i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</span>
                   <span className="lb-name">{e.name}</span>
                   <span className="lb-score">{e.score}</span>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            }
+          </div>
           <button className="game-start-btn" onClick={startGame}>Старт</button>
         </div>
       )}
 
       {revealed && phase === "done" && (
         <div className="game-card">
+          <button className="game-card-close" onClick={() => setRevealed(false)}>✕</button>
           <div className="game-card-icon">{medal}</div>
           <div className="game-card-title">{score} поймано!</div>
           <div className="game-card-sub">{gameResultText(score)}</div>
