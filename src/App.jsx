@@ -1,5 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import "./App.css";
+import { db } from "./firebase";
+import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "firebase/firestore";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -291,15 +293,37 @@ function gameResultText(score) {
 
 function MiniGame() {
   const [revealed, setRevealed] = useState(false);
-  const [phase, setPhase] = useState("idle"); // idle | playing | done
+  const [phase, setPhase] = useState("idle"); // idle | playing | done | submit
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [receipts, setReceipts] = useState([]);
+  const [playerName, setPlayerName] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [leaderboard, setLeaderboard] = useState([]);
   const nextId = useRef(0);
   const spawnTimer = useRef(null);
   const countdownRef = useRef(null);
   const autoTimers = useRef(new Map());
   const phaseRef = useRef("idle");
+
+  // Load leaderboard in real-time
+  useEffect(() => {
+    const q = query(collection(db, "scores"), orderBy("score", "desc"), limit(10));
+    const unsub = onSnapshot(q, snap => {
+      setLeaderboard(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return unsub;
+  }, []);
+
+  const submitScore = async () => {
+    if (!playerName.trim()) return;
+    await addDoc(collection(db, "scores"), {
+      name: playerName.trim(),
+      score,
+      timestamp: serverTimestamp(),
+    });
+    setSubmitted(true);
+  };
 
   const stopAll = () => {
     clearTimeout(spawnTimer.current);
@@ -393,24 +417,58 @@ function MiniGame() {
         </button>
       )}
 
-      {revealed && (phase === "idle" || phase === "done") && (
+      {revealed && phase === "idle" && (
         <div className="game-card">
-          <div className="game-card-icon">
-            {phase === "done" ? medal : "🧾"}
-          </div>
-          <div className="game-card-title">
-            {phase === "idle"
-              ? "Поймай неопознанный платёж!"
-              : `${score} поймано!`}
-          </div>
-          <div className="game-card-sub">
-            {phase === "idle"
-              ? "Кликай по чекам · 60 секунд"
-              : gameResultText(score)}
-          </div>
-          <button className="game-start-btn" onClick={startGame}>
-            {phase === "idle" ? "Старт" : "Ещё раз"}
-          </button>
+          <div className="game-card-icon">🧾</div>
+          <div className="game-card-title">Поймай неопознанный платёж!</div>
+          <div className="game-card-sub">Кликай по чекам · 60 секунд</div>
+          {leaderboard.length > 0 && (
+            <div className="game-leaderboard">
+              {leaderboard.map((e, i) => (
+                <div key={e.id} className="lb-row">
+                  <span className="lb-rank">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`}</span>
+                  <span className="lb-name">{e.name}</span>
+                  <span className="lb-score">{e.score}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <button className="game-start-btn" onClick={startGame}>Старт</button>
+        </div>
+      )}
+
+      {revealed && phase === "done" && (
+        <div className="game-card">
+          <div className="game-card-icon">{medal}</div>
+          <div className="game-card-title">{score} поймано!</div>
+          <div className="game-card-sub">{gameResultText(score)}</div>
+          {!submitted ? (
+            <div className="game-submit">
+              <input
+                className="game-name-input"
+                placeholder="Твоё имя"
+                value={playerName}
+                onChange={e => setPlayerName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && submitScore()}
+                maxLength={20}
+              />
+              <button className="game-start-btn" onClick={submitScore}>Сохранить</button>
+            </div>
+          ) : (
+            <div className="game-card-sub" style={{ color: '#16a34a' }}>✓ Результат сохранён!</div>
+          )}
+          {leaderboard.length > 0 && (
+            <div className="game-leaderboard">
+              {leaderboard.map((e, i) => (
+                <div key={e.id} className={`lb-row ${submitted && e.name === playerName.trim() && e.score === score ? 'lb-mine' : ''}`}>
+                  <span className="lb-rank">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`}</span>
+                  <span className="lb-name">{e.name}</span>
+                  <span className="lb-score">{e.score}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <button className="game-start-btn" style={{ marginTop: '8px' }} onClick={() => { setSubmitted(false); setPlayerName(''); startGame(); }}>Ещё раз</button>
         </div>
       )}
 
