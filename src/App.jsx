@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import "./App.css";
 import { db } from "./firebase";
-import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { ref, push, query, orderByChild, limitToLast, onValue } from "firebase/database";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -308,19 +308,20 @@ function MiniGame() {
 
   // Load leaderboard in real-time
   useEffect(() => {
-    const q = query(collection(db, "scores"), orderBy("score", "desc"), limit(10));
-    const unsub = onSnapshot(q, snap => {
-      setLeaderboard(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
-    return unsub;
+    const q = query(ref(db, "scores"), orderByChild("score"), limitToLast(10));
+    return onValue(q, snap => {
+      const entries = []
+      snap.forEach(child => entries.push({ id: child.key, ...child.val() }))
+      setLeaderboard(entries.reverse())
+    })
   }, []);
 
   const submitScore = async () => {
     if (!playerName.trim()) return;
-    await addDoc(collection(db, "scores"), {
+    await push(ref(db, "scores"), {
       name: playerName.trim(),
       score,
-      timestamp: serverTimestamp(),
+      timestamp: Date.now(),
     });
     setSubmitted(true);
   };
